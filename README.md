@@ -1,4 +1,52 @@
 # TOC Project 2020
+## Language: Python3 
+## Usage
+Get particular game informations from tos.fandom.com.
+The website has too many useless informations and ads. It takes a long time for loading.
+Sometimes I just want to take a look for part of the information, and it takes a long time too.
+As a result, I take the informations I need, and arrange them in my favor.
+Helping me from ads and long waiting time.
+## Code decription
+Main process I write is in "work.py" and in part of "app.py". Other codes are the same as the assistant's. 
+In "work.py", there is a class named "StateMachine". 
+It is used to get input and automatically transform to the state it should be. Then return 
+a list of string for printing out. The functions in "StateMachine" are not for user except "get_text()". 
+Throw any input in "get_text()", and it will return the string you should print out. 
+There are four states in "StateMachine", and they are "start", "web", "hell", "info". 
+As the "get_text()" being activated, the "StateMachine" check the and respond. Clearly, in "web" state 
+called "web_state()", in "hell" state called "hell_state()".
+* Function description:
+THE FUNCTIONS NEED TO MAINTAIN!!</br>
+Functions are based on regular expression module and urllib module. First I get all the website
+ content, and I use "re.findall()" to get the information I need. Like, name of the stage, url 
+ of the inormation page. Because the information I need always locates between some particular words, I 
+ can find the information I need. But once the web page change their web style, my function here my not
+ work.</br>
+* app.py changes:
+-The reply lines are deleted.</br>
++Add global dict to store many "StateMachine". (Dependents on user_id)</br>
++In "callback()", I get the user_id first. In order to reply the users personally.</br>
++Create a new "StateMachine" if the user_id has no "StateMachine" yet.</br>
++Throw the user input to "StateMachine", and reply to user what "StateMachine" return.</br>
+## Notice
+1. This code cannot run locally (Myabe it is because of my computer). Push to heroku, and connect with Line to test it.
+2. DO NOT touch the "StateMachine". It is horrible! Write another one if you need it!
+3. All the skills in this project is "regular expression", "urllib". The "StateMachine" is a mess. No need to understand "StateMachine"
+4. The functions may not work after the website changes.
+
+
+
+
+
+
+
+
+
+
+
+
+# Below is assistant's README
+--------------------------------------------------------------------------------------------------------------
 
 [![Maintainability](https://api.codeclimate.com/v1/badges/dc7fa47fcd809b99d087/maintainability)](https://codeclimate.com/github/NCKU-CCS/TOC-Project-2020/maintainability)
 

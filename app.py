@@ -9,10 +9,12 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 
 from fsm import TocMachine
 from utils import send_text_message
+import work
 
 load_dotenv()
 
-
+#current_state = work.StateMachine()
+current_state = {}
 machine = TocMachine(
     states=["user", "state1", "state2"],
     transitions=[
@@ -72,9 +74,13 @@ def callback():
         if not isinstance(event.message, TextMessage):
             continue
 
-        line_bot_api.reply_message(
-            event.reply_token, TextSendMessage(text=event.message.text)
-        )
+        user_id = event.source.user_id
+        app.logger.info('user id='+str(user_id))
+        if user_id not in current_state:
+            current_state[user_id] = work.StateMachine()
+        text_reply = current_state[user_id].get_text(event.message.text)
+        app.logger.info(text_reply[0][0:30])
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text = text_reply[0]))
 
     return "OK"
 
@@ -84,7 +90,7 @@ def webhook_handler():
     signature = request.headers["X-Line-Signature"]
     # get request body as text
     body = request.get_data(as_text=True)
-    app.logger.info(f"Request body: {body}")
+    app.logger.info("Request body: {body}")
 
     # parse webhook body
     try:
@@ -108,11 +114,20 @@ def webhook_handler():
 
     return "OK"
 
+'''@parser.add(MessageEvent, message=TextMessage)
+def handle_message(event):
+    user_id = event.source.user_id
+    if user_id in current_state:
+        text_reply = current_state[user_id].get_text(event.message.text)
+        app.logger.info(text_reply[0][0:30])
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text = text_reply[0]))
+    else:
+        current_state[user_id] = work.StateMachine()'''
 
-@app.route("/show-fsm", methods=["GET"])
+'''@app.route("/show-fsm", methods=["GET"])
 def show_fsm():
-    machine.get_graph().draw("fsm.png", prog="dot", format="png")
-    return send_file("fsm.png", mimetype="image/png")
+    #machine.get_graph().draw("fsm.png", prog="dot", format="png")
+    return send_file("fsm.png", mimetype="image/png")'''
 
 
 if __name__ == "__main__":
