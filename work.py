@@ -8,6 +8,7 @@ content = urllib.request.urlopen(url + home_page)
 html_str = content.read().decode('utf-8')
 
 def color(string):
+    #return string
     if string == '水':
         return '\uD83D\uDCA7'
     elif string == '木':
@@ -46,6 +47,7 @@ def find_color(href):
     html_str = content.read().decode('utf-8')
     result = re.findall('屬性\n</th><td colspan="3" style="font-size:1.5em"><b>[\\s]*[\\S]', html_str)
     return result[0][len(result[0])-1]
+
 # input: stage url
 # return: ['1.\nattack: 2000\n ... skill:...\n\n "another monster"', 
 # '2.\nattack: 2001\n ... skill', ...]
@@ -59,6 +61,10 @@ def stage_info(sub_url):
     ## an enemy a block
     for block in blocks:
         if block[0:18] == '<td class="stage">':
+            if block[18] == '1':
+                stage_counter = 1
+                if len(block)>19 and block[19].isdigit():
+                    stage_counter = int(block[18:20])
             result.append(str(stage_counter)+'.')
             stage_counter += 1
             if not(block[len(block)-1:len(block)].isdigit()):
@@ -92,6 +98,8 @@ def stage_info(sub_url):
             result[len(result)-1] += '防禦 ' + tmp_text[0] + '\n'
 
             tmp_text = re.findall('title=\"敵人技能[^\"]*\"><span[^>]*>[^<]*<', line[8])
+            if not tmp_text:
+                continue
             skill_text = re.findall('>[^<]*<', tmp_text[0])
             for skill in skill_text:    ## short skill description
                 if skill[1:-1] != '':
@@ -106,6 +114,7 @@ def stage_info(sub_url):
 class StateMachine():
     url_to_choose = []
     hell_to_choose = []
+    buff = []
     def __init__(self):
         self.state = "start"
     def get_text(self, in_text):
@@ -127,10 +136,32 @@ class StateMachine():
             tmp = self.hell_state(in_text)
             result = ""
             for term in tmp:
+                if len(result) > 1500:      ## line reply offers 0-2000 char
+                    self.buff.append(term)
+                    continue
                 result += term + '\n'
+            if self.buff != []:
+                self.state = 'buffer'
+                result += '\n...Enter any word to continue...'
             return [result.strip()]
         elif self.state == 'info':
             return [self.info_state(in_text)]
+        elif self.state == 'buffer':
+            self.state = 'info'
+            result = ''
+            for i in range(len(self.buff)):
+                result += self.buff[i]
+                if len(result) > 1500:
+                    self.buff = self.buff[i+1::]
+                    self.state = 'buffer'
+                    if self.buff != []:
+                        result += '\n...Enter any word to continue...'
+                    else:
+                        self.state = 'info'
+                    break
+            if len(result) <= 1500:
+                self.buff = []
+            return [result.strip()]
         else:
             return ['How did you get this state!?']
 
@@ -138,7 +169,7 @@ class StateMachine():
         if in_text == '地獄級' or in_text == '1':
             self.state = 'hell'
             # find all hell in home page
-            result = home_info('地獄級')
+            result = home_info('地獄')
             # store the url in ordered list
             self.url_to_choose = result[1]
             self.hell_to_choose = result[0]
@@ -147,13 +178,27 @@ class StateMachine():
                 real_result += str(i+1) + '. ' + result[0][i] + '\n'
             return [real_result]
         elif in_text.lower()=='others':
+            return ['Try 戰慄'] ##雙週
             return ['Others 暫缺']
         else:
+            self.state = 'hell'
+            # find all hell in home page
+            result = home_info(in_text)
+            # store the url in ordered list
+            self.url_to_choose = result[1]
+            self.hell_to_choose = result[0]
+            real_result = '選擇關卡:\n'
+            for i in range(len(result[0])):
+                real_result += str(i+1) + '. ' + result[0][i] + '\n'
+            if real_result != 'no data':
+                return [real_result]
             return ['Input "1" or "地獄級" to get more information']
     def hell_state(self, in_text):
         self.state = 'info'
-        if in_text.isdigit():
+        if in_text.strip().isdigit():
             in_text = int(in_text)
+        elif in_text.strip()[0:-1:].isdigit():
+            in_text = int(in_text.strip()[0:-1:])
         if type(in_text) == type(1):
             return stage_info(self.url_to_choose[in_text-1])
         elif type(in_text) == type(''):
@@ -178,13 +223,17 @@ class StateMachine():
         ## else
         return self.info_state('home')
 
-#current_state = StateMachine()
-#print(current_state.get_text('1'))
-#current_state.get_text('1')
+'''current_state = StateMachine()
+print(current_state.get_text('any')[0],'\n')
+#print(current_state.get_text('戰慄')[0],'\n')
+print(current_state.get_text('1')[0],'\n')
+print(current_state.get_text('5')[0])
+print(current_state.get_text('rrr')[0])
+print(current_state.get_text('rrr')[0])
 def main(text):
     if text == 'hello':
         return 'world'
     elif text == 'Hello':
         return 'World \uD83D\uDD25'
     else:
-        return text
+        return text'''
